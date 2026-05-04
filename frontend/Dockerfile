@@ -7,7 +7,7 @@ RUN npm run build --configuration=production
 
 FROM nginx:1.27-alpine
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
-COPY default.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 ARG BACKEND_HOST=claims-backend.railway.internal
 ARG BACKEND_PORT=8080
