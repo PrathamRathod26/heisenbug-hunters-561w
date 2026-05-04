@@ -10,7 +10,7 @@ FROM nginx:1.27-alpine
 COPY --from=build /app/dist/frontend /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-ARG BACKEND_HOST=claims-backend.railway.internal
+ARG BACKEND_HOST=backend-service.railway.internal
 ARG BACKEND_PORT=8080
 RUN sed -i "s|BACKEND_PLACEHOLDER|${BACKEND_HOST}:${BACKEND_PORT}|g" \
     /etc/nginx/conf.d/default.conf
