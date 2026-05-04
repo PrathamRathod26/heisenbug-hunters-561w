@@ -22,7 +22,7 @@ WORKDIR /app
 # pip deps first for layer caching. Cache mount keeps wheels across builds
 # (lives outside the image, so final size is unaffected).
 COPY requirements.txt .
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,id=ml-service-pip-cache,target=/root/.cache/pip pip install -r requirements.txt
     pip install --upgrade pip && \
     pip install -r requirements.txt
 
