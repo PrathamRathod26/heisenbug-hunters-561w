@@ -1,56 +1,72 @@
 @if (showShell()) {
-  <mat-sidenav-container class="shell">
-    <mat-sidenav mode="side" opened class="side">
-      <div class="brand">
-        <mat-icon>shield_person</mat-icon>
-        <span>Claims Platform</span>
-      </div>
-      <mat-nav-list>
-        @for (item of navItems(); track item.path) {
-          <a mat-list-item [routerLink]="item.path" routerLinkActive="active"
-             [routerLinkActiveOptions]="{ exact: item.path === '/claims' }">
-            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-            <span matListItemTitle>{{ item.label }}</span>
-          </a>
-        }
-      </mat-nav-list>
-    </mat-sidenav>
+<mat-sidenav-container class="app-container">
+  <!-- Sidebar -->
+  <mat-sidenav mode="side" opened class="app-sidebar">
+    <div class="sidebar-brand">
+      <mat-icon class="brand-icon">shield_person</mat-icon>
+      <span class="brand-text">Claims Platform</span>
+    </div>
 
-    <mat-sidenav-content>
-      <mat-toolbar color="primary" class="top">
-        <span>Heisenbug Hunters — Claims Platform</span>
-        <span class="spacer"></span>
-        <a mat-button href="/swagger-ui.html" target="_blank" rel="noopener">
-          <mat-icon>api</mat-icon> API Docs
-        </a>
-        @if (auth.user(); as u) {
-          <button mat-button [matMenuTriggerFor]="userMenu" class="user-chip">
-            <mat-icon>account_circle</mat-icon>
-            <span class="user-name">{{ u.displayName }}</span>
-            <span class="user-persona">{{ personaLabel(auth.persona()) }}</span>
-            <mat-icon>expand_more</mat-icon>
-          </button>
-          <mat-menu #userMenu="matMenu">
-            <div class="user-menu-header">
-              <div><strong>{{ u.email }}</strong></div>
-              <div class="muted">{{ personaLabel(auth.persona()) }}</div>
-              <div class="muted" style="margin-top: 4px;">
-                @for (r of auth.activeRoles(); track r) {
-                  <span class="pill pill-muted" style="margin-right: 4px;">{{ r }}</span>
-                }
-              </div>
-            </div>
-            <mat-divider></mat-divider>
-            <button mat-menu-item (click)="auth.logout()">
-              <mat-icon>logout</mat-icon>
-              <span>Sign out</span>
-            </button>
-          </mat-menu>
-        }
-      </mat-toolbar>
+    <mat-nav-list class="sidebar-nav-list">
+      @for (item of navItems(); track item.path) {
+      <a mat-list-item
+         [routerLink]="item.path"
+         routerLinkActive="nav-item-active"
+         [routerLinkActiveOptions]="{ exact: item.path === '/claims' }"
+         class="sidebar-nav-item">
+        <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+        <span matListItemTitle>{{ item.label }}</span>
+      </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <!-- Main Content -->
+  <mat-sidenav-content class="app-content-area">
+    <mat-toolbar class="app-header">
+      <span class="header-title">Heisenbug Hunters — Claims Platform</span>
+
+      <span class="toolbar-spacer"></span>
+
+      <a mat-button href="/swagger-ui.html" target="_blank" rel="noopener" class="api-docs-link">
+        <mat-icon>api</mat-icon>
+        <span>API Docs</span>
+      </a>
+
+      @if (auth.user(); as u) {
+      <button mat-button [matMenuTriggerFor]="userMenu" class="user-profile-trigger">
+        <mat-icon>account_circle</mat-icon>
+        <div class="user-info-container">
+          <span class="user-display-name">{{ u.displayName }}</span>
+          <span class="user-persona-badge">{{ personaLabel(auth.persona()) }}</span>
+        </div>
+        <mat-icon class="expand-icon">expand_more</mat-icon>
+      </button>
+
+      <mat-menu #userMenu="matMenu" class="app-user-menu">
+        <div class="menu-header-section">
+          <div class="menu-user-email">{{ u.email }}</div>
+          <div class="menu-user-persona">{{ personaLabel(auth.persona()) }}</div>
+          <div class="menu-role-container">
+            @for (r of auth.activeRoles(); track r) {
+            <span class="role-chip">{{ r }}</span>
+            }
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="auth.logout()" class="logout-button">
+          <mat-icon>logout</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
+      }
+    </mat-toolbar>
+
+    <main class="router-wrapper">
       <router-outlet />
-    </mat-sidenav-content>
-  </mat-sidenav-container>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
 } @else {
-  <router-outlet />
+<router-outlet />
 }
