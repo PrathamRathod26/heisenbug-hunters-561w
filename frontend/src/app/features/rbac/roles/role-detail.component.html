@@ -1,0 +1,91 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <a class="router-link" routerLink="/rbac/roles">← All roles</a>
+      <h1>Role</h1>
+    </div>
+  </div>
+
+  @if (role(); as r) {
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ r.name }}</mat-card-title>
+        <mat-card-subtitle>
+          <span [class]="r.active ? 'pill pill-ok' : 'pill pill-muted'">{{ r.active ? 'ACTIVE' : 'INACTIVE' }}</span>
+          · {{ r.permissions.length }} permissions
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <dl class="kv">
+          <dt>ID</dt>        <dd><code>{{ r.id }}</code></dd>
+          <dt>Created</dt>   <dd>{{ r.createdAt | date:'medium' }}</dd>
+          <dt>Updated</dt>   <dd>{{ r.updatedAt | date:'medium' }}</dd>
+        </dl>
+
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex: 1; min-width: 260px;">
+            <mat-label>Description</mat-label>
+            <input matInput [(ngModel)]="editDescription">
+          </mat-form-field>
+          <mat-slide-toggle [(ngModel)]="editActive">Active</mat-slide-toggle>
+          <button mat-flat-button color="primary" (click)="saveProfile()">Save profile</button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card style="margin-top: 16px;">
+      <mat-card-header>
+        <mat-card-title>Current permissions</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="r.permissions" style="width: 100%;">
+          <ng-container matColumnDef="capability">
+            <th mat-header-cell *matHeaderCellDef>Capability</th>
+            <td mat-cell *matCellDef="let p"><code>{{ p.capability }}</code></td>
+          </ng-container>
+          <ng-container matColumnDef="scope">
+            <th mat-header-cell *matHeaderCellDef>Scope</th>
+            <td mat-cell *matCellDef="let p"><span class="pill pill-muted">{{ p.scope }}</span></td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="permCols"></tr>
+          <tr mat-row *matRowDef="let row; columns: permCols"></tr>
+        </table>
+        @if (r.permissions.length === 0) {
+          <div class="muted" style="padding: 16px;">No permissions — role grants nothing.</div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card style="margin-top: 16px;">
+      <mat-card-header>
+        <mat-card-title>Replace permissions</mat-card-title>
+        <mat-card-subtitle>Pick the full desired set; PUT replaces — missing IDs are removed.</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="perm-grid">
+          @for (p of allPermissions(); track p.id) {
+            <mat-checkbox [checked]="isSelected(p.id)"
+                          (change)="toggle(p.id, $event.checked)">
+              <code>{{ p.capability }}</code>
+              <span class="pill pill-muted" style="margin-left: 6px;">{{ p.scope }}</span>
+            </mat-checkbox>
+          } @empty {
+            <div class="muted">No permissions seeded yet.</div>
+          }
+        </div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
+          <button mat-flat-button color="primary" (click)="savePermissions()">Save permissions</button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="muted">Loading…</div>
+  }
+</div>
+
+<style>
+  dl.kv { display: grid; grid-template-columns: 120px 1fr; row-gap: 6px; column-gap: 16px; margin: 12px 0; }
+  dl.kv dt { color: rgba(0,0,0,0.54); }
+  dl.kv dd { margin: 0; }
+  .perm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 6px 16px; }
+</style>

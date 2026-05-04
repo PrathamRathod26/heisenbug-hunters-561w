@@ -1,0 +1,27 @@
+-- Runs once, on first boot of an empty data volume.
+-- See database/README.md for semantics.
+--
+-- Least-privilege role scaffold.
+--
+-- The backend currently connects as the superuser (POSTGRES_USER from .env),
+-- which is fine for the hackathon but not production-shaped. When moving to a
+-- dedicated app role:
+--   1. Uncomment the block below.
+--   2. Inject CLAIMS_APP_PASSWORD via env-var templating in an entrypoint
+--      wrapper (stock postgres image does not expand ${...} inside init SQL).
+--   3. Switch SPRING_DATASOURCE_USERNAME/PASSWORD in docker-compose.yml.
+--
+-- DO $$
+-- BEGIN
+--   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'claims_app') THEN
+--     CREATE ROLE claims_app LOGIN PASSWORD 'REPLACE_ME';
+--   END IF;
+-- END
+-- $$;
+--
+-- GRANT CONNECT ON DATABASE claims TO claims_app;
+-- GRANT USAGE ON SCHEMA public TO claims_app;
+-- ALTER DEFAULT PRIVILEGES IN SCHEMA public
+--   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO claims_app;
+-- ALTER DEFAULT PRIVILEGES IN SCHEMA public
+--   GRANT USAGE, SELECT ON SEQUENCES TO claims_app;

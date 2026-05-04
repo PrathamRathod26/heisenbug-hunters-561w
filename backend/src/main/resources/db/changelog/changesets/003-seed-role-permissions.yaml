@@ -1,0 +1,90 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-seed-role-permissions
+      author: heisenbug
+      comment: "Wire roles to permissions per FRS §3.2 matrix (57 links)."
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT count(*) FROM role_permission
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              INSERT INTO role_permission (role_id, permission_id)
+              SELECT r.id, p.id
+              FROM role r, permission p
+              WHERE (r.name, p.capability, p.scope) IN (
+                ('POLICYHOLDER',       'SUBMIT_OWN_CLAIM',                  'GRANTED'),
+                ('POLICYHOLDER',       'VIEW_OWN_CLAIM',                    'GRANTED'),
+                ('POLICYHOLDER',       'INITIATE_GRIEVANCE',                'GRANTED'),
+                ('POLICYHOLDER',       'REQUEST_RIGHT_TO_ERASURE',          'GRANTED'),
+
+                ('ADJUSTER',           'VIEW_ANY_CLAIM',                    'ASSIGNMENT_RESTRICTED'),
+                ('ADJUSTER',           'REQUEST_MORE_INFO',                 'ASSIGNMENT_RESTRICTED'),
+                ('ADJUSTER',           'OVERRIDE_AI_DECISION',              'ASSIGNMENT_RESTRICTED'),
+                ('ADJUSTER',           'APPROVE_CLAIM_WITHIN_ADJUSTER_DOA', 'ASSIGNMENT_RESTRICTED'),
+                ('ADJUSTER',           'REOPEN_CLOSED_CLAIM',               'ASSIGNMENT_RESTRICTED'),
+                ('ADJUSTER',           'REQUEST_RIGHT_TO_ERASURE',          'GRANTED'),
+
+                ('SR_ADJUSTER',        'VIEW_ANY_CLAIM',                    'GRANTED'),
+                ('SR_ADJUSTER',        'REQUEST_MORE_INFO',                 'GRANTED'),
+                ('SR_ADJUSTER',        'OVERRIDE_AI_DECISION',              'GRANTED'),
+                ('SR_ADJUSTER',        'APPROVE_CLAIM_WITHIN_ADJUSTER_DOA', 'GRANTED'),
+                ('SR_ADJUSTER',        'APPROVE_CLAIM_WITHIN_SR_DOA',       'GRANTED'),
+                ('SR_ADJUSTER',        'APPROVE_CLAIM_ABOVE_SR_DOA',        'FOUR_EYE_REQUIRED'),
+                ('SR_ADJUSTER',        'REOPEN_CLOSED_CLAIM',               'GRANTED'),
+                ('SR_ADJUSTER',        'AUTHORISE_PAYOUT_NEW_BANK_ACCOUNT', 'FOUR_EYE_REQUIRED'),
+                ('SR_ADJUSTER',        'ACCESS_FORENSIC_ARTIFACTS',         'READ_ONLY'),
+                ('SR_ADJUSTER',        'APPROVE_THRESHOLD_CHANGE',          'FOUR_EYE_REQUIRED'),
+
+                ('FRAUD_INVESTIGATOR', 'VIEW_ANY_CLAIM',                    'GRANTED'),
+                ('FRAUD_INVESTIGATOR', 'REQUEST_MORE_INFO',                 'GRANTED'),
+                ('FRAUD_INVESTIGATOR', 'OVERRIDE_AI_DECISION',              'GRANTED'),
+                ('FRAUD_INVESTIGATOR', 'REOPEN_CLOSED_CLAIM',               'GRANTED'),
+                ('FRAUD_INVESTIGATOR', 'ACCESS_FORENSIC_ARTIFACTS',         'GRANTED'),
+
+                ('SURVEYOR',           'VIEW_ANY_CLAIM',                    'ASSIGNMENT_RESTRICTED'),
+                ('SURVEYOR',           'REQUEST_MORE_INFO',                 'ASSIGNMENT_RESTRICTED'),
+                ('SURVEYOR',           'SUBMIT_SURVEYOR_REPORT',            'ASSIGNMENT_RESTRICTED'),
+                ('SURVEYOR',           'ACCESS_FORENSIC_ARTIFACTS',         'READ_ONLY'),
+
+                ('GRIEVANCE_OFFICER',  'VIEW_ANY_CLAIM',                    'ASSIGNMENT_RESTRICTED'),
+                ('GRIEVANCE_OFFICER',  'REQUEST_MORE_INFO',                 'GRANTED'),
+                ('GRIEVANCE_OFFICER',  'INITIATE_GRIEVANCE',                'GRANTED'),
+                ('GRIEVANCE_OFFICER',  'RESOLVE_GRIEVANCE',                 'GRANTED'),
+                ('GRIEVANCE_OFFICER',  'REOPEN_CLOSED_CLAIM',               'GRANTED'),
+
+                ('AML_OFFICER',        'VIEW_ANY_CLAIM',                    'GRANTED'),
+                ('AML_OFFICER',        'FILE_STR_TO_FIU_IND',               'GRANTED'),
+                ('AML_OFFICER',        'ACCESS_FORENSIC_ARTIFACTS',         'READ_ONLY'),
+                ('AML_OFFICER',        'APPROVE_THRESHOLD_CHANGE',          'FOUR_EYE_REQUIRED'),
+
+                ('FINANCE_APPROVER',   'VIEW_ANY_CLAIM',                    'READ_ONLY'),
+                ('FINANCE_APPROVER',   'APPROVE_CLAIM_ABOVE_SR_DOA',        'FOUR_EYE_REQUIRED'),
+                ('FINANCE_APPROVER',   'AUTHORISE_PAYOUT_NEW_BANK_ACCOUNT', 'FOUR_EYE_REQUIRED'),
+
+                ('ADMIN',              'VIEW_ANY_CLAIM',                    'GRANTED'),
+                ('ADMIN',              'ACCESS_FORENSIC_ARTIFACTS',         'READ_ONLY'),
+                ('ADMIN',              'PROPOSE_THRESHOLD_CHANGE',          'GRANTED'),
+                ('ADMIN',              'MANAGE_USER_ROLES',                 'GRANTED'),
+                ('ADMIN',              'MANAGE_DOA_MATRIX',                 'GRANTED'),
+                ('ADMIN',              'EXECUTE_RIGHT_TO_ERASURE',          'FOUR_EYE_REQUIRED'),
+
+                ('AUDITOR',            'VIEW_ANY_CLAIM',                    'READ_ONLY'),
+                ('AUDITOR',            'ACCESS_FORENSIC_ARTIFACTS',         'READ_ONLY'),
+
+                ('SYSTEM',             'VIEW_ANY_CLAIM',                    'GRANTED'),
+                ('SYSTEM',             'APPROVE_CLAIM_WITHIN_ADJUSTER_DOA', 'GRANTED'),
+                ('SYSTEM',             'INITIATE_GRIEVANCE',                'GRANTED'),
+                ('SYSTEM',             'REOPEN_CLOSED_CLAIM',               'GRANTED'),
+                ('SYSTEM',             'AUTHORISE_PAYOUT_NEW_BANK_ACCOUNT', 'GRANTED'),
+                ('SYSTEM',             'ACCESS_FORENSIC_ARTIFACTS',         'GRANTED'),
+                ('SYSTEM',             'EXECUTE_RIGHT_TO_ERASURE',          'GRANTED'),
+                ('SYSTEM',             'INVOKE_AI_PIPELINES',               'GRANTED')
+              );
+      rollback:
+        - sql:
+            sql: DELETE FROM role_permission

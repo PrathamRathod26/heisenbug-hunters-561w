@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-seed-roles
+      author: heisenbug
+      comment: "Seed the 11 roles from FRS §3.1."
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT count(*) FROM role
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              INSERT INTO role (id, name, description, active, created_at, updated_at, version) VALUES
+                ('20000000-0000-0000-0000-000000000001', 'POLICYHOLDER',       'Insured individual — files and tracks own claims',                                    true, NOW(), NOW(), 0),
+                ('20000000-0000-0000-0000-000000000002', 'ADJUSTER',           'Claims adjuster — triage & decision within own queue',                               true, NOW(), NOW(), 0),
+                ('20000000-0000-0000-0000-000000000003', 'SR_ADJUSTER',        'Senior claims adjuster — higher DOA + override authority',                           true, NOW(), NOW(), 0),
+                ('20000000-0000-0000-0000-000000000004', 'FRAUD_INVESTIGATOR', 'Fraud investigator — works suspicious cases',                                        true, NOW(), NOW(), 0),
+                ('20000000-0000-0000-0000-000000000005', 'SURVEYOR',           'IRDAI-licensed surveyor — assigned claims only (M-02)',                              true, NOW(), NOW(), 0),
+                ('20000000-0000-0000-0000-000000000006', 'GRIEVANCE_OFFICER',  'Grievance officer — IGMS-aligned complaint handler (M-09)',                          true, NOW(), NOW(), 0),
+                ('20000000-0000-0000-0000-000000000007', 'AML_OFFICER',        'AML / compliance officer — STR + sanctions (M-14, M-15)',                            true, NOW(), NOW(), 0),
+                ('20000000-0000-0000-0000-000000000008', 'FINANCE_APPROVER',   'Finance approver — gates high-value payouts (M-23, M-26)',                           true, NOW(), NOW(), 0),
+                ('20000000-0000-0000-0000-000000000009', 'ADMIN',              'Platform admin — user/role/DOA management, no runtime risk mutation (U-11)',         true, NOW(), NOW(), 0),
+                ('20000000-0000-0000-0000-000000000010', 'AUDITOR',            'Auditor — read-only across the platform',                                            true, NOW(), NOW(), 0),
+                ('20000000-0000-0000-0000-000000000011', 'SYSTEM',             'Non-human principal — automation pathways',                                          true, NOW(), NOW(), 0);
+      rollback:
+        - sql:
+            sql: DELETE FROM role WHERE id::text LIKE '20000000-%'

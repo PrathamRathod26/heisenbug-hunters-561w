@@ -1,0 +1,166 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <a class="router-link" routerLink="/rbac/users">← All users</a>
+      <h1>User</h1>
+    </div>
+  </div>
+
+  @if (user(); as u) {
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ u.displayName }}</mat-card-title>
+        <mat-card-subtitle>
+          {{ u.email }} · <span class="pill pill-muted">{{ u.userType }}</span>
+          · <span [class]="u.status === 'ACTIVE' ? 'pill pill-ok' : u.status === 'SUSPENDED' ? 'pill pill-warn' : 'pill pill-err'">{{ u.status }}</span>
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <dl class="kv">
+          <dt>ID</dt>               <dd><code>{{ u.id }}</code></dd>
+          <dt>External ID</dt>      <dd><code>{{ u.externalId }}</code></dd>
+          @if (u.licenceId) {
+            <dt>Licence ID</dt>       <dd>{{ u.licenceId }}</dd>
+            <dt>Licence expires</dt>  <dd>{{ u.licenceExpiresAt | date:'medium' }}</dd>
+          }
+          <dt>Created</dt>          <dd>{{ u.createdAt | date:'medium' }}</dd>
+          <dt>Updated</dt>          <dd>{{ u.updatedAt | date:'medium' }}</dd>
+        </dl>
+
+        <h3>Profile</h3>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width: 220px;">
+            <mat-label>Display name</mat-label>
+            <input matInput [(ngModel)]="editDisplayName">
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width: 220px;">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="editStatus">
+              @for (s of statuses; track s) {
+                <mat-option [value]="s">{{ s }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="saveProfile()">Save</button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card style="margin-top: 16px;">
+      <mat-card-header>
+        <mat-card-title>Role assignments</mat-card-title>
+        <mat-card-subtitle>{{ u.roleAssignments.length }} total · shows all (active + revoked)</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width: 240px;">
+            <mat-label>Role</mat-label>
+            <mat-select [(ngModel)]="newRoleId">
+              @for (r of availableRoles(); track r.id) {
+                <mat-option [value]="r.id">{{ r.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex: 1; min-width: 240px;">
+            <mat-label>Note (optional)</mat-label>
+            <input matInput [(ngModel)]="newRoleNote">
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="assignRole()" [disabled]="!newRoleId">
+            <mat-icon>add</mat-icon> Assign
+          </button>
+        </div>
+
+        <table mat-table [dataSource]="u.roleAssignments" style="width: 100%;">
+          <ng-container matColumnDef="roleName">
+            <th mat-header-cell *matHeaderCellDef>Role</th>
+            <td mat-cell *matCellDef="let a"><span class="pill pill-muted">{{ a.roleName }}</span></td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let a">
+              <span [class]="a.status === 'ACTIVE' ? 'pill pill-ok' : 'pill pill-err'">{{ a.status }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="grantedAt">
+            <th mat-header-cell *matHeaderCellDef>Granted</th>
+            <td mat-cell *matCellDef="let a">{{ a.grantedAt | date:'medium' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="grantedByEmail">
+            <th mat-header-cell *matHeaderCellDef>By</th>
+            <td mat-cell *matCellDef="let a">{{ a.grantedByEmail || '—' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="note">
+            <th mat-header-cell *matHeaderCellDef>Note</th>
+            <td mat-cell *matCellDef="let a">{{ a.note || '—' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let a">
+              @if (a.status === 'ACTIVE') {
+                <button mat-icon-button color="warn" (click)="revoke(a.id)" title="Revoke">
+                  <mat-icon>block</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="assignmentCols"></tr>
+          <tr mat-row *matRowDef="let row; columns: assignmentCols"></tr>
+        </table>
+        @if (u.roleAssignments.length === 0) {
+          <div class="muted" style="padding: 16px;">No role assignments yet.</div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card style="margin-top: 16px;">
+      <mat-card-header>
+        <mat-card-title>Effective permissions</mat-card-title>
+        <mat-card-subtitle>Union across active role grants · scope is the strongest that applies</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (effective(); as eff) {
+          <div style="margin-bottom: 12px;">
+            <strong>Active roles:</strong>
+            @for (r of eff.activeRoles; track r) {
+              <span class="pill pill-muted" style="margin-right: 6px;">{{ r }}</span>
+            } @empty {
+              <span class="muted">none</span>
+            }
+          </div>
+          @if (eff.permissions.length > 0) {
+            <table mat-table [dataSource]="eff.permissions" style="width: 100%;">
+              <ng-container matColumnDef="capability">
+                <th mat-header-cell *matHeaderCellDef>Capability</th>
+                <td mat-cell *matCellDef="let p"><code>{{ p.capability }}</code></td>
+              </ng-container>
+              <ng-container matColumnDef="scope">
+                <th mat-header-cell *matHeaderCellDef>Scope</th>
+                <td mat-cell *matCellDef="let p"><span [class]="scopePill(p.effectiveScope)">{{ p.effectiveScope }}</span></td>
+              </ng-container>
+              <ng-container matColumnDef="grantedBy">
+                <th mat-header-cell *matHeaderCellDef>Granted by</th>
+                <td mat-cell *matCellDef="let p">
+                  @for (r of p.grantedBy; track r) {
+                    <span class="pill pill-muted" style="margin-right: 4px;">{{ r }}</span>
+                  }
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="['capability','scope','grantedBy']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['capability','scope','grantedBy']"></tr>
+            </table>
+          } @else {
+            <div class="muted">No effective permissions — user has no active roles or assigned roles have no permissions.</div>
+          }
+        }
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="muted">Loading…</div>
+  }
+</div>
+
+<style>
+  dl.kv { display: grid; grid-template-columns: 150px 1fr; row-gap: 6px; column-gap: 16px; margin: 12px 0; }
+  dl.kv dt { color: rgba(0,0,0,0.54); }
+  dl.kv dd { margin: 0; }
+</style>

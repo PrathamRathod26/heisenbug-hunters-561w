@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-seed-user-role-assignments
+      author: heisenbug
+      comment: "Grant each seeded user their primary role; Jane also gets a revoked historical grant to demonstrate audit trail."
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT count(*) FROM user_role_assignment
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              INSERT INTO user_role_assignment (
+                id, user_id, role_id, status, note,
+                granted_by_user_id, granted_at,
+                revoked_at, revoked_by_user_id
+              )
+              SELECT
+                a.id::uuid, a.user_id::uuid, r.id, a.status, a.note,
+                CASE WHEN a.granted_by_user_id = '' THEN NULL ELSE a.granted_by_user_id::uuid END,
+                a.granted_at, a.revoked_at,
+                CASE WHEN a.revoked_by_user_id = '' THEN NULL ELSE a.revoked_by_user_id::uuid END
+              FROM (
+                VALUES
+                ('40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'ADMIN',        'ACTIVE', 'Bootstrap grant', '', NOW(), CAST(NULL AS TIMESTAMPTZ), ''),
+                ('40000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000004', 'ADJUSTER',     'ACTIVE', 'Bootstrap grant', '30000000-0000-0000-0000-000000000001', NOW(), CAST(NULL AS TIMESTAMPTZ), ''),
+                ('40000000-0000-0000-0000-000000000010', '30000000-0000-0000-0000-000000000010', 'POLICYHOLDER', 'ACTIVE', 'Self-registration', '', NOW(), CAST(NULL AS TIMESTAMPTZ), '')
+              ) AS a(id, user_id, role_name, status, note, granted_by_user_id, granted_at, revoked_at, revoked_by_user_id)
+              JOIN role r ON r.name = a.role_name;
+      rollback:
+        - sql:
+            sql: DELETE FROM user_role_assignment WHERE id::text LIKE '40000000-%'

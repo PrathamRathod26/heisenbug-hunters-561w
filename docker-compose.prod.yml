@@ -1,0 +1,130 @@
+name: claims-platform
+
+# Production compose file for the single-VM deploy.
+# Mirrors docker-compose.yml (dev/local) but binds the frontend to the
+# Deployment v2 port contract: the platform injects ${PORT} and the pipeline
+# verifies that the frontend service publishes on it.
+#
+# For a local smoke of this file: PORT=8080 docker compose -f docker-compose.prod.yml up
+
+services:
+
+  postgres:
+    # Stripped to vanilla image for the platform deploy:
+    #   - no custom `command:` (default entrypoint args, no include_dir flag)
+    #   - no bind mounts to ./database/init or ./database/conf.d
+    # The local docker-compose.yml keeps the bootstrap layer for hackathon dev;
+    # on the platform we don't need pgcrypto (UUIDs generated in Java) or the
+    # pg_stat_statements telemetry, and Hibernate `ddl-auto: update` builds
+    # the schema. Eliminating those surfaces fixed the "exits within ~1s of
+    # Started" crash that broke earlier deploys.
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-claims}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-claims} -q"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    networks:
+      - claims-net
+
+  ml-services:
+    build:
+      context: ./ml-services
+      args:
+        HF_TOKEN: ${HF_TOKEN:-}
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - ml-models:/app/models
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health').read()"
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    networks:
+      - claims-net
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-claims}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      INTEGRATIONS_ML_SERVICE_BASE_URL: http://ml-services:8000
+      INTEGRATIONS_PAS_BASE_URL: http://localhost:9999
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost,http://localhost:80}
+      CLAIMS_UPLOAD_DIR: /app/uploads
+      JAVA_TOOL_OPTIONS: >-
+        -XX:MaxRAMPercentage=75
+        -XX:+UseG1GC
+        -Djava.security.egd=file:/dev/./urandom
+    volumes:
+      - backend-uploads:/app/uploads
+    # Defence in depth: even if postgres is briefly not-yet-accepting-connections
+    # when backend boots, Hikari retries via initialization-fail-timeout
+    # (set in application-docker.yml). `service_started` avoids gating the
+    # whole compose run on postgres health.
+    depends_on:
+      postgres:
+        condition: service_started
+      ml-services:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+    networks:
+      - claims-net
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    # Deployment v2 port contract — pipeline verifies ${PORT} publishes here.
+    ports:
+      - "${PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - claims-net
+
+volumes:
+  postgres-data:
+  backend-uploads:
+  ml-models:
+
+# Attach to the platform-managed team network instead of creating our own.
+# The Deployment v2 pipeline pre-creates `team-<slug>-net` before running
+# compose; reusing it saves one /24 subnet per deploy on the shared VM
+# (relevant when default-address-pools is tight).
+networks:
+  claims-net:
+    name: team-heisenbug-hunters-561w-net
+    external: true

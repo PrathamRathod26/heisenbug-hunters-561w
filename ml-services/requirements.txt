@@ -1,0 +1,25 @@
+# Pull torch/torchvision from the PyTorch CPU wheel index. The default PyPI
+# wheels include the full CUDA stack (~1.5GB of unused libs on a CPU-only deploy
+# VM) and pushed our build past the platform's 600s docker-compose timeout.
+# Listing torch BEFORE ultralytics ensures pip resolves the CPU wheel first;
+# ultralytics then accepts it as a satisfied dep.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch>=2.2,<2.6
+torchvision>=0.17,<0.21
+
+fastapi>=0.110,<0.120
+uvicorn[standard]>=0.27,<1.0
+python-multipart>=0.0.9
+python-dotenv>=1.0
+pydantic>=2.5
+
+# Vision / ML
+ultralytics>=8.3.0
+opencv-python-headless>=4.9
+numpy>=1.26,<3.0
+Pillow>=10,<12
+
+# LLM + model fetch
+openai>=1.20
+huggingface-hub>=0.24

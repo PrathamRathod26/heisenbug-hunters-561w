@@ -1,0 +1,110 @@
+<div class="page">
+  <div class="page-header">
+    <h1>Dashboard</h1>
+    <div class="page-actions">
+      <a mat-stroked-button routerLink="/claims">
+        <mat-icon>description</mat-icon> Claims
+      </a>
+      <a mat-stroked-button routerLink="/rbac/users">
+        <mat-icon>person</mat-icon> Users
+      </a>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+
+  <div class="card-row">
+    <mat-card>
+      <mat-card-content>
+        <div class="stat-label">Total claims</div>
+        <div class="stat-value">{{ totalClaims() | number }}</div>
+        <div class="muted">across all statuses</div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card>
+      <mat-card-content>
+        <div class="stat-label">Active users</div>
+        <div class="stat-value">{{ totalUsers() | number }}</div>
+        <div class="muted">with at least one active role grant</div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card>
+      <mat-card-content>
+        <div class="stat-label">Roles</div>
+        <div class="stat-value">{{ totalRoles() | number }}</div>
+        <div class="muted">incl. inactive</div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card>
+      <mat-card-content>
+        <div class="stat-label">Permission atoms</div>
+        <div class="stat-value">{{ totalPermissions() | number }}</div>
+        <div class="muted">(capability, scope) pairs</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="chart-row">
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title>Claims by status</mat-card-title>
+        <mat-card-subtitle>FR-8 routing outcomes</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (totalClaims() > 0) {
+          <div class="chart-host">
+            <canvas baseChart
+                    [data]="claimChartData()"
+                    [options]="claimChartOptions"
+                    type="doughnut"></canvas>
+          </div>
+        } @else {
+          <div class="muted empty">No claim data yet. Create a claim from the Claims page.</div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title>Users per role</mat-card-title>
+        <mat-card-subtitle>Active role assignments (FRS §3)</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (totalUsers() > 0) {
+          <div class="chart-host bar-host">
+            <canvas baseChart
+                    [data]="userChartData()"
+                    [options]="userChartOptions"
+                    type="bar"></canvas>
+          </div>
+        } @else {
+          <div class="muted empty">
+            No active role assignments yet.
+            <a class="router-link" routerLink="/rbac/users">Seed users →</a>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title>Permissions by scope</mat-card-title>
+        <mat-card-subtitle>(capability × scope) distribution</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (totalPermissions() > 0) {
+          <div class="chart-host">
+            <canvas baseChart
+                    [data]="scopeChartData()"
+                    [options]="scopeChartOptions"
+                    type="doughnut"></canvas>
+          </div>
+        } @else {
+          <div class="muted empty">No permissions seeded. Run the backend with Liquibase enabled.</div>
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,62 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <a class="router-link" routerLink="/rbac/doa-matrix">← All DOA entries</a>
+      <h1>DOA entry</h1>
+    </div>
+    <div class="page-actions">
+      <button mat-stroked-button color="warn" (click)="remove()">
+        <mat-icon>delete</mat-icon> Delete
+      </button>
+    </div>
+  </div>
+
+  @if (entry(); as m) {
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ m.roleName }} — {{ m.lineOfBusiness }} — {{ m.geo }}</mat-card-title>
+        <mat-card-subtitle>
+          <span [class]="m.active ? 'pill pill-ok' : 'pill pill-muted'">{{ m.active ? 'ACTIVE' : 'INACTIVE' }}</span>
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <dl class="kv">
+          <dt>ID</dt>              <dd><code>{{ m.id }}</code></dd>
+          <dt>Role</dt>            <dd>{{ m.roleName }}</dd>
+          <dt>LOB</dt>             <dd>{{ m.lineOfBusiness }}</dd>
+          <dt>Geo</dt>             <dd>{{ m.geo }}</dd>
+          <dt>Approve up to</dt>   <dd>{{ m.approveUpToPaise | paiseInr }}</dd>
+          <dt>4-eye above</dt>     <dd>{{ m.fourEyeAbovePaise | paiseInr }}</dd>
+          <dt>Created</dt>         <dd>{{ m.createdAt | date:'medium' }}</dd>
+          <dt>Updated</dt>         <dd>{{ m.updatedAt | date:'medium' }}</dd>
+        </dl>
+
+        <h3>Edit limits</h3>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Approve up to (₹)</mat-label>
+            <input matInput type="number" [(ngModel)]="editApproveUpToRupees" min="0" step="0.01">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Four-eye above (₹)</mat-label>
+            <input matInput type="number" [(ngModel)]="editFourEyeAboveRupees" min="0" step="0.01">
+          </mat-form-field>
+          <div style="display: flex; align-items: center;">
+            <mat-slide-toggle [(ngModel)]="editActive">Active</mat-slide-toggle>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+          <button mat-flat-button color="primary" (click)="save()">Save</button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="muted">Loading…</div>
+  }
+</div>
+
+<style>
+  dl.kv { display: grid; grid-template-columns: 150px 1fr; row-gap: 6px; column-gap: 16px; margin: 12px 0; }
+  dl.kv dt { color: rgba(0,0,0,0.54); }
+  dl.kv dd { margin: 0; }
+</style>

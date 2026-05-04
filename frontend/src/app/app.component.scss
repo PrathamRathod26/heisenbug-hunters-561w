@@ -1,0 +1,31 @@
+.shell { height: 100vh; }
+
+.side { width: 240px; background: #263238; color: #eceff1; }
+.side .brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 18px; font-size: 16px; font-weight: 500;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.side .brand mat-icon { color: #80cbc4; }
+.side .mat-mdc-list-item { color: #cfd8dc; }
+.side .mat-mdc-list-item.active {
+  background: rgba(128, 203, 196, 0.14);
+  color: #80cbc4;
+  border-left: 3px solid #80cbc4;
+}
+.side .mat-mdc-list-item mat-icon { color: inherit; }
+
+.top { position: sticky; top: 0; z-index: 2; }
+.spacer { flex: 1; }
+
+.user-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0 8px;
+}
+.user-chip .user-name { font-weight: 500; }
+.user-chip .user-persona {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 2px 8px; border-radius: 10px;
+  background: rgba(255,255,255,0.18);
+}
+.user-menu-header { padding: 12px 16px; font-size: 13px; }

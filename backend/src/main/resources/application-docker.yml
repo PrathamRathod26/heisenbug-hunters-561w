@@ -1,0 +1,56 @@
+# Active when SPRING_PROFILES_ACTIVE=docker (set by docker-compose.yml).
+# Everything tuneable is env-overridable; defaults match the compose topology.
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/claims_dev}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+      # Retry pool initialisation for up to 60s on startup. Compose now uses
+      # `service_started` (not service_healthy) for postgres, so the backend
+      # may boot before postgres is accepting connections. This window lets
+      # Hikari ride out the gap instead of failing fast.
+      initialization-fail-timeout: 60000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+server:
+  tomcat:
+    threads:
+      max: 100
+      min-spare: 10
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+
+logging:
+  structured:
+    format:
+      console: logstash
+  level:
+    root: INFO
+    com.heisenbug.claims: INFO
+
+integrations:
+  pas:
+    base-url: http://localhost:9999
+  ml-service:
+    base-url: http://ml-services:8000
+
+cors:
+  allowed-origins: http://localhost,http://localhost:80
+
+claims:
+  upload-dir: /app/uploads

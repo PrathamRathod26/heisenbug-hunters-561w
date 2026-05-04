@@ -1,0 +1,49 @@
+<div class="login-page">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>shield_person</mat-icon>
+        Sign in — Claims Platform
+      </mat-card-title>
+      <mat-card-subtitle>
+        Pick a seeded user. Only Policyholders, Claims Adjusters, and Insurance Administrators may access the web portal.
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (loading()) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      } @else {
+        <mat-nav-list>
+          @for (u of candidates(); track u.id) {
+            <a mat-list-item
+               (click)="signIn(u)"
+               [attr.aria-disabled]="submitting() !== null"
+               [class.busy]="submitting() === u.id">
+              <mat-icon matListItemIcon>account_circle</mat-icon>
+              <div matListItemTitle>{{ u.displayName }}</div>
+              <div matListItemLine>
+                <span class="muted">{{ u.email }}</span>
+                · <span [class]="typePillClass(u.userType)">{{ u.userType }}</span>
+              </div>
+              @if (submitting() === u.id) {
+                <mat-icon matListItemMeta>hourglass_top</mat-icon>
+              } @else {
+                <mat-icon matListItemMeta>login</mat-icon>
+              }
+            </a>
+          } @empty {
+            <div class="muted" style="padding: 16px;">
+              No users available. Ensure the backend is running and has seeded data
+              (see <code>db/changelog/</code>).
+            </div>
+          }
+        </mat-nav-list>
+      }
+    </mat-card-content>
+
+    <mat-card-footer class="muted" style="padding: 12px 16px; font-size: 12px;">
+      Dev-mode impersonation. Real authentication (OIDC + OTP per FR-1) is on the roadmap.
+    </mat-card-footer>
+  </mat-card>
+</div>

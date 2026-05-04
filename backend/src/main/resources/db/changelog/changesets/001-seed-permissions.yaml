@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-seed-permissions
+      author: heisenbug
+      comment: "Seed the 32-row (capability, scope) catalog derived from FRS §3.2."
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT count(*) FROM permission
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              INSERT INTO permission (id, capability, scope, description) VALUES
+                ('10000000-0000-0000-0000-000000000001', 'SUBMIT_OWN_CLAIM',                  'GRANTED',               'Submit or update own claim'),
+                ('10000000-0000-0000-0000-000000000002', 'VIEW_OWN_CLAIM',                    'GRANTED',               'View own claim'),
+                ('10000000-0000-0000-0000-000000000003', 'VIEW_ANY_CLAIM',                    'GRANTED',               'View any claim'),
+                ('10000000-0000-0000-0000-000000000004', 'VIEW_ANY_CLAIM',                    'READ_ONLY',             'View any claim (read-only audit)'),
+                ('10000000-0000-0000-0000-000000000005', 'VIEW_ANY_CLAIM',                    'ASSIGNMENT_RESTRICTED', 'View claims assigned to self'),
+                ('10000000-0000-0000-0000-000000000006', 'REQUEST_MORE_INFO',                 'GRANTED',               'Request more info from policyholder'),
+                ('10000000-0000-0000-0000-000000000007', 'REQUEST_MORE_INFO',                 'ASSIGNMENT_RESTRICTED', 'Request more info on assigned claims'),
+                ('10000000-0000-0000-0000-000000000008', 'OVERRIDE_AI_DECISION',              'GRANTED',               'Override AI decision on any claim'),
+                ('10000000-0000-0000-0000-000000000009', 'OVERRIDE_AI_DECISION',              'ASSIGNMENT_RESTRICTED', 'Override AI decision on assigned claim'),
+                ('10000000-0000-0000-0000-000000000010', 'APPROVE_CLAIM_WITHIN_ADJUSTER_DOA', 'GRANTED',               'Approve claims within Adjuster DOA'),
+                ('10000000-0000-0000-0000-000000000011', 'APPROVE_CLAIM_WITHIN_ADJUSTER_DOA', 'ASSIGNMENT_RESTRICTED', 'Approve assigned claims within Adjuster DOA'),
+                ('10000000-0000-0000-0000-000000000012', 'APPROVE_CLAIM_WITHIN_SR_DOA',       'GRANTED',               'Approve claims within Sr. Adjuster DOA'),
+                ('10000000-0000-0000-0000-000000000013', 'APPROVE_CLAIM_ABOVE_SR_DOA',        'FOUR_EYE_REQUIRED',     'Approve claims above Sr. DOA (four-eye)'),
+                ('10000000-0000-0000-0000-000000000014', 'SUBMIT_SURVEYOR_REPORT',            'ASSIGNMENT_RESTRICTED', 'Submit surveyor report for assigned claim'),
+                ('10000000-0000-0000-0000-000000000015', 'FILE_STR_TO_FIU_IND',               'GRANTED',               'File STR to FIU-IND'),
+                ('10000000-0000-0000-0000-000000000016', 'INITIATE_GRIEVANCE',                'GRANTED',               'Initiate grievance case'),
+                ('10000000-0000-0000-0000-000000000017', 'RESOLVE_GRIEVANCE',                 'GRANTED',               'Resolve grievance case'),
+                ('10000000-0000-0000-0000-000000000018', 'REOPEN_CLOSED_CLAIM',               'GRANTED',               'Reopen any closed claim'),
+                ('10000000-0000-0000-0000-000000000019', 'REOPEN_CLOSED_CLAIM',               'ASSIGNMENT_RESTRICTED', 'Reopen assigned closed claim'),
+                ('10000000-0000-0000-0000-000000000020', 'AUTHORISE_PAYOUT_NEW_BANK_ACCOUNT', 'GRANTED',               'Authorise payout to new bank account (system)'),
+                ('10000000-0000-0000-0000-000000000021', 'AUTHORISE_PAYOUT_NEW_BANK_ACCOUNT', 'FOUR_EYE_REQUIRED',     'Authorise payout to new bank account (four-eye)'),
+                ('10000000-0000-0000-0000-000000000022', 'ACCESS_FORENSIC_ARTIFACTS',         'GRANTED',               'Access raw forensic artifacts'),
+                ('10000000-0000-0000-0000-000000000023', 'ACCESS_FORENSIC_ARTIFACTS',         'READ_ONLY',             'Access raw forensic artifacts (read-only)'),
+                ('10000000-0000-0000-0000-000000000024', 'CHANGE_CONFIDENCE_THRESHOLDS_UI',   'GRANTED',               'Change confidence thresholds via UI (never granted — U-11)'),
+                ('10000000-0000-0000-0000-000000000025', 'PROPOSE_THRESHOLD_CHANGE',          'GRANTED',               'Propose threshold change via change-request'),
+                ('10000000-0000-0000-0000-000000000026', 'APPROVE_THRESHOLD_CHANGE',          'FOUR_EYE_REQUIRED',     'Approve threshold change (four-eye)'),
+                ('10000000-0000-0000-0000-000000000027', 'MANAGE_USER_ROLES',                 'GRANTED',               'Manage user roles'),
+                ('10000000-0000-0000-0000-000000000028', 'MANAGE_DOA_MATRIX',                 'GRANTED',               'Manage DOA matrix'),
+                ('10000000-0000-0000-0000-000000000029', 'EXECUTE_RIGHT_TO_ERASURE',          'GRANTED',               'Execute right-to-erasure (system)'),
+                ('10000000-0000-0000-0000-000000000030', 'EXECUTE_RIGHT_TO_ERASURE',          'FOUR_EYE_REQUIRED',     'Execute right-to-erasure (four-eye)'),
+                ('10000000-0000-0000-0000-000000000031', 'REQUEST_RIGHT_TO_ERASURE',          'GRANTED',               'Request right-to-erasure'),
+                ('10000000-0000-0000-0000-000000000032', 'INVOKE_AI_PIPELINES',               'GRANTED',               'Invoke AI pipelines');
+      rollback:
+        - sql:
+            sql: DELETE FROM permission WHERE id::text LIKE '10000000-%'

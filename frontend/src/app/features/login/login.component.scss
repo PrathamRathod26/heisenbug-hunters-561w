@@ -1,0 +1,27 @@
+.login-page {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #263238 0%, #37474f 100%);
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 560px;
+}
+
+.login-card mat-card-title {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 500;
+}
+
+.login-card .mat-mdc-list-item.busy {
+  opacity: 0.6; pointer-events: none;
+}
+
+.login-card .mat-mdc-list-item {
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.login-card .mat-mdc-list-item:last-child { border-bottom: none; }
+.login-card .mat-mdc-list-item:hover { background: #f5f7f8; }

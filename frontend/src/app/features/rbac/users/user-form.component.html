@@ -1,0 +1,54 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <a class="router-link" routerLink="/rbac/users">← All users</a>
+      <h1>New user</h1>
+    </div>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>External ID (IdP subject)</mat-label>
+            <input matInput formControlName="externalId">
+            <mat-error>Required, max 128 chars</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" type="email">
+            <mat-error>Valid email required</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Display name</mat-label>
+            <input matInput formControlName="displayName">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>User type</mat-label>
+            <mat-select formControlName="userType">
+              @for (t of userTypes; track t) {
+                <mat-option [value]="t">{{ t }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Licence ID (surveyors only)</mat-label>
+            <input matInput formControlName="licenceId">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Licence expires at</mat-label>
+            <input matInput formControlName="licenceExpiresAt" type="datetime-local">
+          </mat-form-field>
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+          <a mat-button routerLink="/rbac/users">Cancel</a>
+          <button type="submit" mat-raised-button color="primary" [disabled]="form.invalid">
+            Create
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

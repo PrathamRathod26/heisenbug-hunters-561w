@@ -1,0 +1,5 @@
+/.idea/
+/backend/uploads/
+/backend/logs/
+/ml-services/models/
+.env

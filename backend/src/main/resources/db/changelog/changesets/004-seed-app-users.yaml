@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-seed-app-users
+      author: heisenbug
+      comment: "Seed one representative user per role plus a sample policyholder."
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT count(*) FROM app_user
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              INSERT INTO app_user (
+                id, external_id, email, display_name, user_type, status,
+                licence_id, licence_expires_at,
+                created_at, updated_at, version
+              ) VALUES
+                ('30000000-0000-0000-0000-000000000001', 'idp-sub-admin',   'admin@amnex.com',      'Platform Admin',         'INTERNAL',     'ACTIVE', NULL, NULL, NOW(), NOW(), 0),
+                ('30000000-0000-0000-0000-000000000004', 'idp-sub-adj',     'adjuster@amnex.com',   'Rohit Patel (Adjuster)', 'INTERNAL',     'ACTIVE', NULL, NULL, NOW(), NOW(), 0),
+                ('30000000-0000-0000-0000-000000000010', 'idp-sub-ph-jane', 'jane.doe@example.com', 'Jane Doe',               'POLICYHOLDER', 'ACTIVE', NULL, NULL, NOW(), NOW(), 0);
+      rollback:
+        - sql:
+            sql: DELETE FROM app_user WHERE id::text LIKE '30000000-%'

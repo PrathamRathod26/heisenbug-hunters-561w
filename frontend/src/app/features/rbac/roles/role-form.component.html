@@ -1,0 +1,53 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <a class="router-link" routerLink="/rbac/roles">← All roles</a>
+      <h1>New role</h1>
+    </div>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <mat-select formControlName="name">
+              @for (n of roleNames; track n) {
+                <mat-option [value]="n">{{ n }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" style="grid-column: span 2;">
+            <mat-label>Description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </div>
+
+        <h3 style="margin-top: 16px;">Permissions</h3>
+        <div class="perm-grid">
+          @for (p of permissions(); track p.id) {
+            <mat-checkbox [checked]="isSelected(p.id)"
+                          (change)="toggle(p.id, $event.checked)">
+              <code>{{ p.capability }}</code>
+              <span class="pill pill-muted" style="margin-left: 6px;">{{ p.scope }}</span>
+            </mat-checkbox>
+          } @empty {
+            <div class="muted">No permissions seeded yet — POST to /api/v1/rbac/permissions or run a seed script.</div>
+          }
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+          <a mat-button routerLink="/rbac/roles">Cancel</a>
+          <button type="submit" mat-raised-button color="primary" [disabled]="form.invalid">
+            Create
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<style>
+  .perm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 6px 16px; }
+</style>
