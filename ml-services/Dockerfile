@@ -5,8 +5,8 @@ FROM python:3.11-slim AS runtime
 # BuildKit cache mounts so re-builds reuse the apt download cache instead of
 # re-fetching every package; the default `docker-clean` hook would defeat the
 # cache, so we drop it before apt-get update.
-RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,id=apt-lib,target=/var/lib/apt,sharing=locked \
+RUN --mount=type=cache,id=ml-service-apt-cache,target=/var/cache/apt \
+    --mount=type=cache,id=ml-service-apt-lib,target=/var/lib/apt \
     rm -f /etc/apt/apt.conf.d/docker-clean && \
     apt-get update && apt-get install -y --no-install-recommends \
         libgl1 \
