@@ -7,7 +7,7 @@ RUN npm run build --configuration=production
 RUN find /app/dist -type f | head -30
 
 FROM nginx:1.27-alpine
-COPY --from=build /app/dist/frontend /usr/share/nginx/html
+COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
 EXPOSE 80
