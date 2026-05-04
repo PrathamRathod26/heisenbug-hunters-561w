@@ -1,8 +1,9 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/claims_dev
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
       minimum-idle: 1
@@ -14,6 +15,7 @@ spring:
       hibernate:
         format_sql: true
         highlight_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 logging:
   level:
