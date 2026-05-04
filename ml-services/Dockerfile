@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1.7
 FROM python:3.11-slim AS runtime
 
-# OpenCV + ffmpeg system deps
-# Railway supports BuildKit cache mounts — use the service ID (not a custom key name)
-# as Railway requires the format: id=<railway-service-id>
-# Set RAILWAY_DOCKERFILE_PATH in service variables if this file isn't at the root
-RUN --mount=type=cache,id=ml-service-apt-cache,target=/var/cache/apt \
-    --mount=type=cache,id=ml-service-apt-lib,target=/var/lib/apt \
+# ── Get your service ID from: Railway Dashboard → your service → Settings → Service ID
+# Replace YOUR_SERVICE_ID_HERE with that value (e.g. a1b2c3d4-e5f6-...)
+ARG RAILWAY_SERVICE_ID=3ffc787e-fa23-48e1-9f22-06394b06d179
+
+RUN --mount=type=cache,id=s/YOUR_SERVICE_ID_HERE-apt-cache,target=/var/cache/apt \
+    --mount=type=cache,id=s/YOUR_SERVICE_ID_HERE-apt-lib,target=/var/lib/apt \
     rm -f /etc/apt/apt.conf.d/docker-clean && \
     apt-get update && apt-get install -y --no-install-recommends \
         libgl1 \
@@ -20,12 +20,9 @@ RUN --mount=type=cache,id=ml-service-apt-cache,target=/var/cache/apt \
 
 WORKDIR /app
 
-# pip cache mount — Railway's PIP_CACHE_DIR is /root/.cache/pip
-RUN --mount=type=cache,id=ml-service-pip-cache,target=/root/.cache/pip \
-    pip install --upgrade pip
-
 COPY requirements.txt .
-RUN --mount=type=cache,id=ml-service-pip-cache,target=/root/.cache/pip \
+RUN --mount=type=cache,id=s/YOUR_SERVICE_ID_HERE-pip-cache,target=/root/.cache/pip \
+    pip install --upgrade pip && \
     pip install -r requirements.txt
 
 COPY app ./app
@@ -35,15 +32,9 @@ RUN chmod +x docker-entrypoint.sh && \
     mkdir -p /app/models
 
 ENV PYTHONUNBUFFERED=1
-
-# Railway dynamically assigns the PORT env variable at runtime.
-# Do NOT hardcode 8000 — read $PORT and fall back to 8000 for local dev.
-# The EXPOSE directive is documentation-only on Railway; actual port binding
-# is controlled by the PORT variable Railway injects.
 ARG PORT=8000
 ENV PORT=${PORT}
 EXPOSE ${PORT}
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
-# Use the Railway-injected $PORT at runtime
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
