@@ -4,16 +4,10 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build --configuration=production
-RUN find /app/dist -type f | head -30
 
 FROM nginx:1.27-alpine
 COPY --from=build /app/dist/frontend /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-ARG BACKEND_HOST=backend-service.railway.internal
-ARG BACKEND_PORT=8080
-RUN sed -i "s|BACKEND_PLACEHOLDER|${BACKEND_HOST}:${BACKEND_PORT}|g" \
-    /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "envsubst '${BACKEND_HOST} ${BACKEND_PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
